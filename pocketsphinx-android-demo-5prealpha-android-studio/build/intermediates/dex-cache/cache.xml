@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="C:\Users\admin\Downloads\pocketsphinx-android-demo-5prealpha-android-studio\app\libs\pocketsphinx-android-0.8-nolib.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="79e72ad97c6001aa89f3a250970615d92eb05fb8">
+        <dex dex="C:\Users\admin\Downloads\pocketsphinx-android-demo-5prealpha-android-studio\app\build\intermediates\pre-dexed\debug\pocketsphinx-android-0.8-nolib-b6768c0dd4cccad87a010f3a7dc897a61690232a.jar" />
+    </item>
+
+</items>
