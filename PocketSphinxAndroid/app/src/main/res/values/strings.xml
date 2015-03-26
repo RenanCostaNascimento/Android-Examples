@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+<resources>
 
     <string name="app_name">PocketSphinx Demo</string>
     <string name="start">Start</string>
     <string name="stop">Stop</string>
 
-    <string name="digits">Digits</string>
-    <string name="weather">Weather</string>
-    <string name="speech">Press to record</string>
-    <string name="recording">Recording...</string>
-    <string name="comandos">Comandos</string>
+    <string name="english_recognizer">English Recognizer</string>
+    <string name="english_recognizer_caption">Let\'s recognize some digits: say something like \"one two three four five\".</string>
+    <string name="portuguese_recognizer">Reconhecedor em Português</string>
+    <string name="portuguese_recognizer_caption">Peça uma bebida: \"Três cervejas\".</string>
 
-    <string name="kws_caption">To start demonstration say \"oh mighty computer\".</string>
-    <string name="menu_caption">Say \"digits\" or \"forecast\" to choose particular example.</string>
-    <string name="digits_caption">Let\'s recognize some digits: say something like \"one two three four five\".</string>
-    <string name="forecast_caption">Say something typical to a weather forecast like \"sunny spells on Wednesday\".</string>
-    <string name="comandos_caption">Peça uma bebida: \"Eu ordeno três cervejas\".</string>
+    <string name="record_button">Press to record</string>
+    <string name="recording_button">Recording...</string>
+    <string name="no_hyphotesis">No word recognized</string>
+
+    <string name="no_recognizer">Choose a recognizer above.</string>
+    <string name="recognizer_setup">Preparing the recognizer...</string>
+    <string name="recognizer_setup_failed">Failed to initialize the recognizer.</string>
+    <string name="recognizer_setup_success">Choose a grammar above.</string>
+
 </resources>

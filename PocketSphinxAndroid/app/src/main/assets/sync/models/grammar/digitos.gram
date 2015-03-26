@@ -1,9 +1,9 @@
 #JSGF V1.0;
 
-grammar comandos;
+grammar digitos;
 
 
-public <comandos> = <numero> <bebida>;
+public <pedido> = <numero> <bebida>;
 
 <numero> = zero | um | dois | três | quatro | cinco | seis | sete | oito | nove;
 <bebida> = (café | cafés) | (cerveja | cervejas) | (água | águas) | (refrigerante | refrigerantes);

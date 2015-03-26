@@ -31,12 +31,16 @@
 package costanascimento.android.pocketsphinx.demo;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,15 +56,19 @@ import static edu.cmu.pocketsphinx.SpeechRecognizerSetup.defaultSetup;
 public class PocketSphinxActivity extends Activity implements
         RecognitionListener {
 
-    private static final String KWS_SEARCH = "wakeup";
-    private static final String FORECAST_SEARCH = "forecast";
-    private static final String COMMANDS_LM_SEARCH = "commands_lm";
-    private static final String COMANDOS_SEARCH = "comandos";
-    private static final String DIGITS_SEARCH = "digits";
-    private static final String MENU_SEARCH = "menu";
-    private static final String KEYPHRASE = "oh mighty computer";
-    private String currentSearch;
+    private static final String PORTUGUESE_RECOGNIZER = "portuguese_recognizer";
+    private static final String ENGLISH_RECOGNIZER = "english_recognizer";
 
+    private static final String RESOURCES_LOCATION = "models";
+    private static final String ENGLISH_AM_LOCATION = "hmm/en-us-semi";
+    private static final String ENGLISH_DICT_LOCATION = "dict/cmu07a.dic";
+    private static final String ENGLISH_GRAM_LOCATION = "grammar/digits.gram";
+    private static final String PORTUGUESE_AM_LOCATION = "am";
+    private static final String PORTUGUESE_DICT_LOCATION = "dict/constituicao.dic";
+    private static final String PORTUGUESE_GRAM_LOCATION = "grammar/digitos.gram";
+
+
+    private String currentSearch;
     private SpeechRecognizer recognizer;
     private HashMap<String, Integer> captions;
 
@@ -70,86 +78,43 @@ public class PocketSphinxActivity extends Activity implements
 
         // Prepare the data for UI
         captions = new HashMap<String, Integer>();
-        captions.put(KWS_SEARCH, R.string.kws_caption);
-        captions.put(MENU_SEARCH, R.string.menu_caption);
-        captions.put(DIGITS_SEARCH, R.string.digits_caption);
-        captions.put(FORECAST_SEARCH, R.string.forecast_caption);
-        captions.put(COMANDOS_SEARCH, R.string.comandos_caption);
+        captions.put(ENGLISH_RECOGNIZER, R.string.english_recognizer_caption);
+        captions.put(PORTUGUESE_RECOGNIZER, R.string.portuguese_recognizer_caption);
         setContentView(R.layout.main);
         ((TextView) findViewById(R.id.caption_text))
-                .setText("Preparing the recognizer");
+                .setText(R.string.no_recognizer);
 
         Button button = (Button) findViewById(R.id.speech_button);
         button.setEnabled(false);
         button.setOnClickListener(onClickListener);
 
         RadioGroup radioGroup = (RadioGroup) findViewById(R.id.radiogroup);
-        radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (checkedId == R.id.digits) {
-                    switchSearch(DIGITS_SEARCH);
-                } else {
-                    if (checkedId == R.id.weather) {
-                        switchSearch(FORECAST_SEARCH);
-                    } else{
-                        switchSearch(COMANDOS_SEARCH);
-                    }
-                }
-                findViewById(R.id.speech_button).setEnabled(true);
-            }
-        });
+        radioGroup.setOnCheckedChangeListener(onCheckedChangeListener);
         radioGroup.setEnabled(false);
-
-        // Recognizer initialization is a time-consuming and it involves IO,
-        // so we execute it in async task
-
-        new AsyncTask<Void, Void, Exception>() {
-            @Override
-            protected Exception doInBackground(Void... params) {
-                try {
-                    Assets assets = new Assets(PocketSphinxActivity.this);
-                    File assetDir = assets.syncAssets();
-                    setupRecognizer(assetDir);
-                } catch (IOException e) {
-                    return e;
-                }
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Exception result) {
-                if (result != null) {
-                    ((TextView) findViewById(R.id.caption_text))
-                            .setText("Failed to init recognizer " + result);
-                } else {
-                    ((TextView) findViewById(R.id.caption_text))
-                            .setText("Choose a grammar above.");
-                    ((RadioGroup) findViewById(R.id.radiogroup)).setEnabled(true);
-                }
-            }
-        }.execute();
     }
 
+    /**
+     * Método chamado sempre que uma nova palavra é reconhecida.
+     *
+     * @param hypothesis palavra reconhecida.
+     */
     @Override
     public void onPartialResult(Hypothesis hypothesis) {
-        /*String text = hypothesis.getHypstr();
-        if (text.equals(KEYPHRASE))
-            switchSearch(MENU_SEARCH);
-        else if (text.equals(DIGITS_SEARCH))
-            switchSearch(DIGITS_SEARCH);
-        else if (text.equals(FORECAST_SEARCH))
-            switchSearch(FORECAST_SEARCH);
-        else
-            ((TextView) findViewById(R.id.result_text)).setText(text);*/
     }
 
+    /**
+     * Metodo chamado após a chamada 'recognizer.stop();'.
+     *
+     * @param hypothesis palavra reconhecida.
+     */
     @Override
     public void onResult(Hypothesis hypothesis) {
-        ((TextView) findViewById(R.id.result_text)).setText("");
         if (hypothesis != null) {
+
             String text = hypothesis.getHypstr();
             ((TextView) findViewById(R.id.result_text)).setText(text);
+        } else {
+            ((TextView) findViewById(R.id.result_text)).setText(R.string.no_hyphotesis);
         }
     }
 
@@ -157,6 +122,9 @@ public class PocketSphinxActivity extends Activity implements
     public void onBeginningOfSpeech() {
     }
 
+    /**
+     * Método chamado quando o reconhecedor detecta silêncio entra as falas.
+     */
     @Override
     public void onEndOfSpeech() {
     }
@@ -167,33 +135,30 @@ public class PocketSphinxActivity extends Activity implements
         ((TextView) findViewById(R.id.caption_text)).setText(caption);
     }
 
-    private void setupRecognizer(File assetsDir) {
-        File modelsDir = new File(assetsDir, "models");
-        recognizer = defaultSetup()
-                //.setAcousticModel(new File(modelsDir, "hmm/en-us-semi"))
-                //.setDictionary(new File(modelsDir, "dict/cmu07a.dic"))
-                .setAcousticModel(new File(modelsDir, "am"))
-                .setDictionary(new File(modelsDir, "dict/constituicao.dic"))
-                .setRawLogDir(assetsDir).setKeywordThreshold(1e-20f)
-                .getRecognizer();
-        recognizer.addListener(this);
+    private void setupRecognizer(File assetsDir, Integer recognizerId) {
+        File modelsDir = new File(assetsDir, RESOURCES_LOCATION);
 
-        // Create keyword-activation search.
-        recognizer.addKeyphraseSearch(KWS_SEARCH, KEYPHRASE);
+        if (recognizerId == R.id.english_recognizer_radio) {
+            recognizer = defaultSetup()
+                    .setAcousticModel(new File(modelsDir, ENGLISH_AM_LOCATION))
+                    .setDictionary(new File(modelsDir, ENGLISH_DICT_LOCATION))
+                    .setRawLogDir(assetsDir).setKeywordThreshold(1e-20f)
+                    .getRecognizer();
+            recognizer.addListener(this);
 
-        // Create grammar-based searches.
-        File menuGrammar = new File(modelsDir, "grammar/menu.gram");
-        recognizer.addGrammarSearch(MENU_SEARCH, menuGrammar);
+            File englishGrammar = new File(modelsDir, ENGLISH_GRAM_LOCATION);
+            recognizer.addGrammarSearch(ENGLISH_RECOGNIZER, englishGrammar);
+        } else {
+            recognizer = defaultSetup()
+                    .setAcousticModel(new File(modelsDir, PORTUGUESE_AM_LOCATION))
+                    .setDictionary(new File(modelsDir, PORTUGUESE_DICT_LOCATION))
+                    .setRawLogDir(assetsDir).setKeywordThreshold(1e-20f)
+                    .getRecognizer();
+            recognizer.addListener(this);
 
-        File digitsGrammar = new File(modelsDir, "grammar/digits.gram");
-        recognizer.addGrammarSearch(DIGITS_SEARCH, digitsGrammar);
-
-        File comandosGrammar = new File(modelsDir, "grammar/comandos.gram");
-        recognizer.addGrammarSearch(COMANDOS_SEARCH, comandosGrammar);
-
-        // Create language model search.
-        File languageModel = new File(modelsDir, "lm/weather.dmp");
-        recognizer.addNgramSearch(FORECAST_SEARCH, languageModel);
+            File portugueseGrammar = new File(modelsDir, PORTUGUESE_GRAM_LOCATION);
+            recognizer.addGrammarSearch(PORTUGUESE_RECOGNIZER, portugueseGrammar);
+        }
     }
 
     private final View.OnClickListener onClickListener = new View.OnClickListener() {
@@ -203,14 +168,75 @@ public class PocketSphinxActivity extends Activity implements
         public void onClick(View v) {
             if (!isRecording) {
                 isRecording = true;
-                ((Button) findViewById(R.id.speech_button)).setText(R.string.recording);
+                ((Button) findViewById(R.id.speech_button)).setText(R.string.recording_button);
                 recognizer.startListening(currentSearch);
 
             } else {
                 isRecording = false;
-                ((Button) findViewById(R.id.speech_button)).setText(R.string.speech);
+                ((Button) findViewById(R.id.speech_button)).setText(R.string.record_button);
                 recognizer.stop();
+                recognizer.cancel();
             }
         }
     };
+
+    private final RadioGroup.OnCheckedChangeListener onCheckedChangeListener = new RadioGroup.OnCheckedChangeListener() {
+        private boolean isRecording = false;
+
+        @Override
+        public void onCheckedChanged(RadioGroup group, int checkedId) {
+            // Recognizer initialization is a time-consuming and it involves IO,
+            // so we execute it in async task
+            new RecognizerInitializer(PocketSphinxActivity.this).execute(checkedId);
+
+            if (checkedId == R.id.english_recognizer_radio) {
+                switchSearch(ENGLISH_RECOGNIZER);
+            } else {
+                switchSearch(PORTUGUESE_RECOGNIZER);
+            }
+            findViewById(R.id.speech_button).setEnabled(true);
+        }
+    };
+
+    private class RecognizerInitializer extends AsyncTask<Integer, Void, Exception> {
+
+        private ProgressDialog progressDialog;
+        private Context context;
+
+        public RecognizerInitializer(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            progressDialog = new ProgressDialog(context);
+            progressDialog.setMessage(PocketSphinxActivity.this.getString(R.string.recognizer_setup));
+            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            progressDialog.show();
+        }
+
+        @Override
+        protected Exception doInBackground(Integer... params) {
+            try {
+                Assets assets = new Assets(PocketSphinxActivity.this);
+                File assetDir = assets.syncAssets();
+                setupRecognizer(assetDir, params[0]);
+            } catch (IOException e) {
+                return e;
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Exception result) {
+            progressDialog.dismiss();
+            if (result != null) {
+                ((TextView) findViewById(R.id.caption_text))
+                        .setText(R.string.recognizer_setup_failed);
+                Log.e("SphinxError", result.getStackTrace().toString());
+            }
+        }
+    }
+
+
 }
