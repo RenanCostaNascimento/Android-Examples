@@ -1,0 +1,216 @@
+/* ====================================================================
+ * Copyright (c) 2014 Alpha Cephei Inc.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY ALPHA CEPHEI INC. ``AS IS'' AND
+ * ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY
+ * NOR ITS EMPLOYEES BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ====================================================================
+ */
+
+package costanascimento.android.pocketsphinx.demo;
+
+import android.app.Activity;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.RadioGroup;
+import android.widget.TextView;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+
+import edu.cmu.pocketsphinx.Assets;
+import edu.cmu.pocketsphinx.Hypothesis;
+import edu.cmu.pocketsphinx.RecognitionListener;
+import edu.cmu.pocketsphinx.SpeechRecognizer;
+
+import static edu.cmu.pocketsphinx.SpeechRecognizerSetup.defaultSetup;
+
+public class PocketSphinxActivity extends Activity implements
+        RecognitionListener {
+
+    private static final String KWS_SEARCH = "wakeup";
+    private static final String FORECAST_SEARCH = "forecast";
+    private static final String COMMANDS_LM_SEARCH = "commands_lm";
+    private static final String COMANDOS_SEARCH = "comandos";
+    private static final String DIGITS_SEARCH = "digits";
+    private static final String MENU_SEARCH = "menu";
+    private static final String KEYPHRASE = "oh mighty computer";
+    private String currentSearch;
+
+    private SpeechRecognizer recognizer;
+    private HashMap<String, Integer> captions;
+
+    @Override
+    public void onCreate(Bundle state) {
+        super.onCreate(state);
+
+        // Prepare the data for UI
+        captions = new HashMap<String, Integer>();
+        captions.put(KWS_SEARCH, R.string.kws_caption);
+        captions.put(MENU_SEARCH, R.string.menu_caption);
+        captions.put(DIGITS_SEARCH, R.string.digits_caption);
+        captions.put(FORECAST_SEARCH, R.string.forecast_caption);
+        captions.put(COMANDOS_SEARCH, R.string.comandos_caption);
+        setContentView(R.layout.main);
+        ((TextView) findViewById(R.id.caption_text))
+                .setText("Preparing the recognizer");
+
+        Button button = (Button) findViewById(R.id.speech_button);
+        button.setEnabled(false);
+        button.setOnClickListener(onClickListener);
+
+        RadioGroup radioGroup = (RadioGroup) findViewById(R.id.radiogroup);
+        radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                if (checkedId == R.id.digits) {
+                    switchSearch(DIGITS_SEARCH);
+                } else {
+                    if (checkedId == R.id.weather) {
+                        switchSearch(FORECAST_SEARCH);
+                    } else{
+                        switchSearch(COMANDOS_SEARCH);
+                    }
+                }
+                findViewById(R.id.speech_button).setEnabled(true);
+            }
+        });
+        radioGroup.setEnabled(false);
+
+        // Recognizer initialization is a time-consuming and it involves IO,
+        // so we execute it in async task
+
+        new AsyncTask<Void, Void, Exception>() {
+            @Override
+            protected Exception doInBackground(Void... params) {
+                try {
+                    Assets assets = new Assets(PocketSphinxActivity.this);
+                    File assetDir = assets.syncAssets();
+                    setupRecognizer(assetDir);
+                } catch (IOException e) {
+                    return e;
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Exception result) {
+                if (result != null) {
+                    ((TextView) findViewById(R.id.caption_text))
+                            .setText("Failed to init recognizer " + result);
+                } else {
+                    ((TextView) findViewById(R.id.caption_text))
+                            .setText("Choose a grammar above.");
+                    ((RadioGroup) findViewById(R.id.radiogroup)).setEnabled(true);
+                }
+            }
+        }.execute();
+    }
+
+    @Override
+    public void onPartialResult(Hypothesis hypothesis) {
+        /*String text = hypothesis.getHypstr();
+        if (text.equals(KEYPHRASE))
+            switchSearch(MENU_SEARCH);
+        else if (text.equals(DIGITS_SEARCH))
+            switchSearch(DIGITS_SEARCH);
+        else if (text.equals(FORECAST_SEARCH))
+            switchSearch(FORECAST_SEARCH);
+        else
+            ((TextView) findViewById(R.id.result_text)).setText(text);*/
+    }
+
+    @Override
+    public void onResult(Hypothesis hypothesis) {
+        ((TextView) findViewById(R.id.result_text)).setText("");
+        if (hypothesis != null) {
+            String text = hypothesis.getHypstr();
+            ((TextView) findViewById(R.id.result_text)).setText(text);
+        }
+    }
+
+    @Override
+    public void onBeginningOfSpeech() {
+    }
+
+    @Override
+    public void onEndOfSpeech() {
+    }
+
+    private void switchSearch(String searchName) {
+        currentSearch = searchName;
+        String caption = getResources().getString(captions.get(searchName));
+        ((TextView) findViewById(R.id.caption_text)).setText(caption);
+    }
+
+    private void setupRecognizer(File assetsDir) {
+        File modelsDir = new File(assetsDir, "models");
+        recognizer = defaultSetup()
+                //.setAcousticModel(new File(modelsDir, "hmm/en-us-semi"))
+                //.setDictionary(new File(modelsDir, "dict/cmu07a.dic"))
+                .setAcousticModel(new File(modelsDir, "am"))
+                .setDictionary(new File(modelsDir, "dict/constituicao.dic"))
+                .setRawLogDir(assetsDir).setKeywordThreshold(1e-20f)
+                .getRecognizer();
+        recognizer.addListener(this);
+
+        // Create keyword-activation search.
+        recognizer.addKeyphraseSearch(KWS_SEARCH, KEYPHRASE);
+
+        // Create grammar-based searches.
+        File menuGrammar = new File(modelsDir, "grammar/menu.gram");
+        recognizer.addGrammarSearch(MENU_SEARCH, menuGrammar);
+
+        File digitsGrammar = new File(modelsDir, "grammar/digits.gram");
+        recognizer.addGrammarSearch(DIGITS_SEARCH, digitsGrammar);
+
+        File comandosGrammar = new File(modelsDir, "grammar/comandos.gram");
+        recognizer.addGrammarSearch(COMANDOS_SEARCH, comandosGrammar);
+
+        // Create language model search.
+        File languageModel = new File(modelsDir, "lm/weather.dmp");
+        recognizer.addNgramSearch(FORECAST_SEARCH, languageModel);
+    }
+
+    private final View.OnClickListener onClickListener = new View.OnClickListener() {
+        private boolean isRecording = false;
+
+        @Override
+        public void onClick(View v) {
+            if (!isRecording) {
+                isRecording = true;
+                ((Button) findViewById(R.id.speech_button)).setText(R.string.recording);
+                recognizer.startListening(currentSearch);
+
+            } else {
+                isRecording = false;
+                ((Button) findViewById(R.id.speech_button)).setText(R.string.speech);
+                recognizer.stop();
+            }
+        }
+    };
+}

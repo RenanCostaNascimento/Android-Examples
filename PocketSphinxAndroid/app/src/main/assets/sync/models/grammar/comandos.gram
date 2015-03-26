@@ -1,0 +1,11 @@
+#JSGF V1.0;
+
+grammar comandos;
+
+
+public <comandos> = <numero> <bebida>;
+
+<numero> = zero | um | dois | três | quatro | cinco | seis | sete | oito | nove;
+<bebida> = (café | cafés) | (cerveja | cervejas) | (água | águas) | (refrigerante | refrigerantes);
+
+
