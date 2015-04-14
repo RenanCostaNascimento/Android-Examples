@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">JuliusVsSphinx</string>
+
+    <string name="title_section1">Conjunto 1</string>
+    <string name="title_section2">Conjunto 2</string>
+    <string name="title_section3">Conjunto 3</string>
+    <string name="title_section4">Conjunto 4</string>
+    <string name="title_section5">Conjunto 5</string>
+    <string name="title_section6">Conjunto 6</string>
+    <string name="title_section7">Conjunto 7</string>
+    <string name="title_section8">Conjunto 8</string>
+    <string name="title_section9">Conjunto 9</string>
+    <string name="title_section10">Conjunto 10</string>
+
+    <string name="next_button">Próxima</string>
+    <string name="no_more_words">Conjunto vazio</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_example">Example action</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="record_button">Gravar</string>
+    <string name="no_word_recognized">Nenhuma palavra reconhecida</string>
+</resources>
