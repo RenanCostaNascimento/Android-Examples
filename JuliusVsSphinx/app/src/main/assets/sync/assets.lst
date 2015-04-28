@@ -1,0 +1,10 @@
+models/am/feat.params
+models/am/mdef
+models/am/means
+models/am/mixture_weights
+models/am/noisedict
+models/am/transition_matrices
+models/am/variances
+models/dict/constituicao.dic
+models/grammar/OLD_palavras.gram
+models/grammar/palavras.gram
